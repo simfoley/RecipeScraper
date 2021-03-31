@@ -5,8 +5,9 @@
     <PackageProjectUrl>https://gitlab.com/simon.foley/RecipeScraper</PackageProjectUrl>
     <Authors>Simon Foley</Authors>
     <Description>
-      Library where you can pass a Recipe webpage url and it returns a Recipe object.
+      Library that uses Anglesharp to parse a webpage that contains a recipe and returns a recipe object.
     </Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
