@@ -17,4 +17,4 @@ deploy:
   script:
     - dotnet restore
     - dotnet pack -c Release /p:Version=$CI_COMMIT_TAG
-    - dotnet nuget push "bin/Release/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key $NUGET_API_KEY
+    - dotnet nuget push "RecipeScraper/bin/Release/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key $NUGET_API_KEY
