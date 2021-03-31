@@ -39,9 +39,9 @@ namespace RecipeScraper.Scrapers
             _microdata = _pageContent.All.FirstOrDefault(x => x.LocalName == "div" && x.HasAttribute("itemscope") && x.HasAttribute("itemtype") && x.GetAttribute("itemtype").StartsWith("http://schema.org/Recipe"));
         }
 
-        public ScrapedRecipe ScrapeRecipe()
+        public ScrappedRecipe ScrapeRecipe()
         {
-            return new ScrapedRecipe() 
+            return new ScrappedRecipe() 
             { 
                 Name = GetName(),
                 Image = GetImage(),

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace RecipeScraper.Models
 {
-    public class ScrapedRecipe
+    public class ScrappedRecipe
     {
         public string Name { get; set; }
         public string Image { get; set; }
