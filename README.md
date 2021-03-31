@@ -17,7 +17,7 @@ var scraper = ScraperFactory.GetScraper(url);
 var scrapedRecipe = scraper.ScrapeRecipe();
 ```
 
-## [Releases](https://gitlab.com/simon.foley/RecipeScraper/-/tags)
+### [Releases](https://gitlab.com/simon.foley/RecipeScraper/-/tags)
 
 ## Contribution and Possible Improvements
 
