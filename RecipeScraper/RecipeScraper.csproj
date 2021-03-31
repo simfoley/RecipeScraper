@@ -2,6 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageProjectUrl>https://gitlab.com/simon.foley/RecipeScraper</PackageProjectUrl>
+    <Authors>Simon Foley</Authors>
+    <Description>
+      Library where you can pass a Recipe webpage url and it returns a Recipe object.
+    </Description>
   </PropertyGroup>
 
   <ItemGroup>
