@@ -8,16 +8,16 @@ using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
 using System.Text.Json;
 using System.Xml;
+using System.Text.RegularExpressions;
 
 namespace RecipeScraper.Scrapers
 {
-    //The BaseScraper should be able to handle pages compliant with http://schema.org/Recipe object, either with Json LD or with Microdata
+    //The BaseScraper should be able to handle pages compliant with http://schema.org/Recipe object, either with Json LD or with Microdata or both
     public class BaseScraper
     {
-        string _url;
-        IDocument _pageContent;
-        JsonElement _jsonRecipe;
-        IElement _microdata;
+        protected string _url;
+        protected IDocument _pageContent;
+        protected JsonElement _jsonRecipe;
 
         public BaseScraper(string url)
         {
@@ -27,80 +27,247 @@ namespace RecipeScraper.Scrapers
             var config = Configuration.Default.WithDefaultLoader();
             var context = BrowsingContext.New(config);
             _pageContent = context.OpenAsync(url).Result;
+            
+            //Get recipe Json LD if possible
+            SetRecipeJson();
+        }
 
-            //Check if page uses json ld
-            var jsonLdRecipeElement = _pageContent.Scripts.FirstOrDefault(x => x.Type == "application/ld+json" && x.InnerHtml.Contains("\"@type\": \"Recipe\""));
-            if (jsonLdRecipeElement != null)
+        public bool PageContentIsValid()
+        {
+            if (_jsonRecipe.ValueKind == JsonValueKind.Undefined)
             {
-                _jsonRecipe = JsonDocument.Parse(jsonLdRecipeElement.InnerHtml).RootElement;
+                if (_pageContent.All.FirstOrDefault(x => x.HasAttribute("itemprop")) == null)
+                {
+                    return false;
+                }
             }
 
-            //check if page uses microdata
-            _microdata = _pageContent.All.FirstOrDefault(x => x.LocalName == "div" && x.HasAttribute("itemscope") && x.HasAttribute("itemtype") && x.GetAttribute("itemtype").StartsWith("http://schema.org/Recipe"));
+            return true;
         }
 
         public ScrappedRecipe ScrapeRecipe()
         {
             return new ScrappedRecipe() 
             { 
-                Name = GetName(),
-                Image = GetImage(),
-                Yield = GetYield(),
-                PrepTime = GetPrepTime(),
-                CookTime = GetCookTime(),
-                RecipeIngredients = GetRecipeIngredients(),
-                RecipeInstructions = GetRecipeInstructions()
+                Name = IgnoreExceptions(() => GetName(), null),
+                Image = IgnoreExceptions(() => GetImage(), null),
+                Yield = IgnoreExceptions(() => GetYield(), null),
+                PrepTime = IgnoreExceptions(() => GetPrepTime(), new TimeSpan()),
+                CookTime = IgnoreExceptions(() => GetCookTime(), new TimeSpan()),
+                RecipeIngredients = IgnoreExceptions(() => GetRecipeIngredients(), new string[0]),
+                RecipeInstructions = IgnoreExceptions(() => GetRecipeInstructions(), new string[0])
             };
+        }
+
+        //Method to ignore exceptions so we can keep trying to get other values from the webpage
+        private T IgnoreExceptions<T>(Func<T> operation, T defaultValue)
+        {
+            if (operation == null)
+                return defaultValue;
+
+            T result;
+            try
+            {
+                result = operation.Invoke();
+            }
+            catch
+            {
+                result = defaultValue;
+            }
+
+            return result;
         }
 
         public virtual string GetName()
         {
-            return GetRecipeProperty("name");
+            string name = null;
+            
+            //Json LD
+            if (_jsonRecipe.ValueKind != JsonValueKind.Undefined)
+            {
+                if (_jsonRecipe.GetProperty("name").ValueKind == JsonValueKind.String)
+                {
+                    name = _jsonRecipe.GetProperty("name").GetString();
+                }
+            }
+
+            //Microdata
+            if (string.IsNullOrEmpty(name))
+            {
+                var nameElements = GetMultipleItemPropElements("name");
+                if (nameElements.Count > 1)
+                {
+                    name = nameElements.FirstOrDefault(x => x.ParentElement.HasAttribute("itemtype") && x.ParentElement.GetAttribute("itemtype").StartsWith("http://schema.org/Recipe")).TextContent.Trim();
+                }
+                else if (nameElements.Count == 1)
+                {
+                    name = nameElements.First().TextContent.Trim();
+                }
+            }
+
+            name = Regex.Replace(name, @"\r\n?|\n", "");
+
+            return name;
         }
 
         public virtual string GetImage()
         {
-            return GetRecipeProperty("image");
+            string imageSource = null;
+            
+            //Json LD
+            if (_jsonRecipe.ValueKind != JsonValueKind.Undefined)
+            {
+                var imageProperty = _jsonRecipe.GetProperty("image");
+                if (imageProperty.ValueKind == JsonValueKind.Object)
+                {
+                    if (imageProperty.GetProperty("url").ValueKind == JsonValueKind.String)
+                    {
+                        imageSource = imageProperty.GetProperty("url").GetString();
+                    }
+                }
+                else if (imageProperty.ValueKind == JsonValueKind.String)
+                {
+                    imageSource = imageProperty.GetString();
+                }
+            }
+
+            //Microdata
+            if (string.IsNullOrEmpty(imageSource))
+            {
+                IElement imageElement = null;
+                var imageElements = GetMultipleItemPropElements("image");
+                if (imageElements.Count == 1)
+                {
+                    imageElement = imageElements.First();
+                }
+                else
+                {
+                    imageElement = imageElements.FirstOrDefault(x => x.ParentElement.HasAttribute("itemtype") && x.ParentElement.GetAttribute("itemtype").StartsWith("http://schema.org/Recipe"));
+                }
+
+                if (imageElement?.LocalName == "img")
+                {
+                    imageSource = imageElement.GetAttribute("src");
+                }
+                else if (imageElement != null)
+                {
+                    imageSource = imageElement.TextContent.Trim();
+                }
+            }
+
+            return imageSource;
         }
 
         public virtual string GetYield()
         {
-            return GetRecipeProperty("recipeYield");
+            string yield = null;
+            
+            //Json LD
+            if (_jsonRecipe.ValueKind != JsonValueKind.Undefined)
+            {
+                if (_jsonRecipe.GetProperty("recipeYield").ValueKind == JsonValueKind.String)
+                {
+                    yield = _jsonRecipe.GetProperty("recipeYield").GetString();
+                }
+            }
+
+            //Microdata
+            if (string.IsNullOrEmpty(yield))
+            {
+                yield = GetSingleItemPropElement("recipeYield")?.TextContent.Trim();
+            }
+
+            return yield;
         }
 
         public virtual TimeSpan GetPrepTime()
         {
-            return XmlConvert.ToTimeSpan(GetRecipeProperty("prepTime"));
+            string prepTime = string.Empty;
+            
+            //Json LD
+            if (_jsonRecipe.ValueKind != JsonValueKind.Undefined)
+            {
+                if (_jsonRecipe.GetProperty("prepTime").ValueKind == JsonValueKind.String)
+                {
+                    prepTime = _jsonRecipe.GetProperty("prepTime").GetString();
+                }
+            }
+
+            //Microdata
+            if (string.IsNullOrEmpty(prepTime))
+            {
+                var prepTimeElement = GetSingleItemPropElement("prepTime");
+                if (prepTimeElement.LocalName == "time")
+                {
+                    prepTime = prepTimeElement.GetAttribute("datetime");
+                }
+                else
+                {
+                    prepTime = prepTimeElement.InnerHtml.Trim();
+                }
+            }
+
+            return XmlConvert.ToTimeSpan(prepTime);
         }
 
         public virtual TimeSpan GetCookTime()
         {
-            return XmlConvert.ToTimeSpan(GetRecipeProperty("cookTime"));
+            string cookTime = string.Empty;
+            
+            //Json LD
+            if (_jsonRecipe.ValueKind != JsonValueKind.Undefined)
+            {
+                if (_jsonRecipe.GetProperty("cookTime").ValueKind == JsonValueKind.String)
+                {
+                    cookTime = _jsonRecipe.GetProperty("cookTime").GetString();
+                }
+            }
+
+            //Microdata
+            if (string.IsNullOrEmpty(cookTime))
+            {
+                var cookTimeElement = GetSingleItemPropElement("cookTime");
+                if (cookTimeElement.LocalName == "time")
+                {
+                    cookTime = cookTimeElement.GetAttribute("datetime");
+                }
+                else
+                {
+                    cookTime = cookTimeElement.InnerHtml.Trim();
+                }
+            }
+
+            return XmlConvert.ToTimeSpan(cookTime);
         }
 
         public virtual string[] GetRecipeIngredients() 
         {
             var recipeIngredients = new List<string>();
-
+            
             //Json LD
             if (_jsonRecipe.ValueKind != JsonValueKind.Undefined)
             {
                 foreach (var ingredient in _jsonRecipe.GetProperty("recipeIngredient").EnumerateArray())
                 {
-                    recipeIngredients.Add(ingredient.ToString());
+                    if (ingredient.ValueKind == JsonValueKind.String)
+                    {
+                        recipeIngredients.Add(ingredient.ToString());
+                    }
                 }
             }
 
             //Microdata
-            if (recipeIngredients.Count == 0 && _microdata != null)
+            if (!recipeIngredients.Any())
             {
-                var ingredientsElement = _microdata.Children.FirstOrDefault(x => x.LocalName == "div" && !x.HasAttribute("itemprop") && x.InnerHtml.Contains("recipeIngredient"));
-                if (ingredientsElement != null)
+                var ingredientElements = GetMultipleItemPropElements("recipeIngredient");
+                if (!ingredientElements.Any())
                 {
-                    foreach (var ingredient in ingredientsElement.Children.ToArray())
-                    {
-                        recipeIngredients.Add(ingredient.InnerHtml);
-                    }
+                    ingredientElements = GetMultipleItemPropElements("ingredients");
+                }
+
+                foreach (var ingredient in ingredientElements)
+                {
+                    recipeIngredients.Add(ingredient.TextContent.Trim());
                 }
             }
 
@@ -110,7 +277,7 @@ namespace RecipeScraper.Scrapers
         public virtual string[] GetRecipeInstructions()
         {
             var recipeInstructions = new List<string>();
-
+            
             //Json LD
             if (_jsonRecipe.ValueKind != JsonValueKind.Undefined)
             {
@@ -119,14 +286,25 @@ namespace RecipeScraper.Scrapers
             }
 
             //Microdata
-            if (recipeInstructions.Count == 0 && _microdata != null)
+            if (!recipeInstructions.Any())
             {
-                var instructionsElement = _microdata.Children.FirstOrDefault(x => x.HasAttribute("itemprop") && x.GetAttribute("itemprop").StartsWith("recipeInstructions"));
+                var instructionsElement = GetSingleItemPropElement("recipeInstructions");
                 if (instructionsElement != null)
                 {
-                    foreach (var ingredient in instructionsElement.Children.ToArray())
+                    //Check current element is the list already or one children deeper
+                    if (instructionsElement.FirstElementChild.Children.Count() == 0)
                     {
-                        recipeInstructions.Add(ingredient.InnerHtml);
+                        foreach (var ingredient in instructionsElement.Children.ToArray())
+                        {
+                            recipeInstructions.Add(ingredient.TextContent.Trim());
+                        }
+                    }
+                    else
+                    {
+                        foreach (var ingredient in instructionsElement.FirstElementChild.Children.ToArray())
+                        {
+                            recipeInstructions.Add(ingredient.TextContent.Trim());
+                        }
                     }
                 }
             }
@@ -134,23 +312,23 @@ namespace RecipeScraper.Scrapers
             return recipeInstructions.ToArray();
         }
 
-        protected string GetRecipeProperty(string propertyName)
+        protected IElement GetSingleItemPropElement(string itemPropName)
         {
-            string result = null;
+            return _pageContent.All.FirstOrDefault(x => x.HasAttribute("itemprop") && x.GetAttribute("itemprop").StartsWith(itemPropName));
+        }
 
-            //Json LD
-            if (_jsonRecipe.ValueKind != JsonValueKind.Undefined)
+        protected List<IElement> GetMultipleItemPropElements(string itemPropName)
+        {
+            return _pageContent.All.Where(x => x.HasAttribute("itemprop") && x.GetAttribute("itemprop").StartsWith(itemPropName)).ToList();
+        }
+
+        private void SetRecipeJson()
+        {
+            var jsonLdRecipeElement = _pageContent.Scripts.FirstOrDefault(x => x.Type == "application/ld+json" && x.InnerHtml.Contains("\"@type\": \"Recipe\""));
+            if (jsonLdRecipeElement != null)
             {
-                result = _jsonRecipe.GetProperty(propertyName).GetString();
+                _jsonRecipe = JsonDocument.Parse(jsonLdRecipeElement.InnerHtml).RootElement;
             }
-
-            //Microdata
-            if (string.IsNullOrEmpty(result) && _microdata != null)
-            {
-                result = _microdata.Children.FirstOrDefault(x => x.HasAttribute("itemprop") && x.GetAttribute("itemprop").StartsWith(propertyName))?.InnerHtml;
-            }
-
-            return result;
         }
 
         //Because recipeInstruction can be in different formats in json-ld, just recurse through the json and keep the "text" properties values. 

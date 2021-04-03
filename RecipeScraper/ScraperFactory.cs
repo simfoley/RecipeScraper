@@ -7,14 +7,38 @@ namespace RecipeScraper
 {
     public static class ScraperFactory
     {
+        public static Dictionary<String, Func<String, BaseScraper>> scrapers;
+
         public static BaseScraper GetScraper(string url)
         {
-            switch (new Uri(url).Host)
+            string hostname = new Uri(url).Host.Replace("www.", "");
+
+            if (!scrapers.ContainsKey(hostname)) 
             {
-                //TODO add other scrapers
-                default:
-                    return new BaseScraper(url);
+                //Verify that the webpage page contains a schema.org recipe object to scrap
+                var scraper = new BaseScraper(url);
+
+                if (!scraper.PageContentIsValid())
+                {
+                    throw new NotSupportedException("This webpage does not contain a schema.org recipe object to scrap.");
+                }
+
+                return scraper;
             }
+
+            Func<String, BaseScraper> create = scrapers[hostname];
+
+            return create(url);
+        }
+
+        static ScraperFactory()
+        {
+            scrapers = new Dictionary<string, Func<string, BaseScraper>>()
+            {
+                {"troisfoisparjour.com", (x)=>new TroisFoisParJourScraper(x)},
+                { "lecoupdegrace.ca",  (x)=>new LeCoupDeGrace(x)}
+            };
+
         }
     }
 }
