@@ -5,11 +5,12 @@ using System.Linq;
 
 namespace RecipeScraper.Scrapers
 {
-    class LeCoupDeGrace : BaseScraper
+    public class LeCoupDeGraceScraper : BaseScraper
     {
-        public LeCoupDeGrace(string url) : base(url)
+        public LeCoupDeGraceScraper(string url) : base(url)
         { 
         }
+
         public override string GetYield()
         {
             var yieldElement = _pageContent.All.FirstOrDefault(x => x.HasAttribute("class") && x.GetAttribute("class").StartsWith("portions"));

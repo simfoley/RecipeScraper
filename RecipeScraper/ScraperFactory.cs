@@ -7,7 +7,7 @@ namespace RecipeScraper
 {
     public static class ScraperFactory
     {
-        public static Dictionary<String, Func<String, BaseScraper>> scrapers;
+        private static Dictionary<String, Func<String, BaseScraper>> scrapers;
 
         public static BaseScraper GetScraper(string url)
         {
@@ -30,15 +30,18 @@ namespace RecipeScraper
 
             return create(url);
         }
+        
+        public static void AddCustomScraper(string hostname, Func<string, BaseScraper> customScraper)
+        {
+            scrapers.Add(hostname, customScraper);
+        }
 
         static ScraperFactory()
         {
             scrapers = new Dictionary<string, Func<string, BaseScraper>>()
             {
-                {"troisfoisparjour.com", (x)=>new TroisFoisParJourScraper(x)},
-                { "lecoupdegrace.ca",  (x)=>new LeCoupDeGrace(x)}
+                { "lecoupdegrace.ca",  (x) => new LeCoupDeGraceScraper(x)}
             };
-
         }
     }
 }

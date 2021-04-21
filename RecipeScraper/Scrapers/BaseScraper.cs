@@ -174,7 +174,16 @@ namespace RecipeScraper.Scrapers
             //Microdata
             if (string.IsNullOrEmpty(yield))
             {
-                yield = GetSingleItemPropElement("recipeYield")?.TextContent.Trim();
+                var yieldElement = GetSingleItemPropElement("recipeYield");
+                if (yieldElement?.LocalName == "meta")
+                {
+                    yield = yieldElement.GetAttribute("content");
+                }
+                else
+                {
+                    yield = yieldElement?.TextContent.Trim();
+                }
+
             }
 
             return yield;
@@ -197,13 +206,17 @@ namespace RecipeScraper.Scrapers
             if (string.IsNullOrEmpty(prepTime))
             {
                 var prepTimeElement = GetSingleItemPropElement("prepTime");
-                if (prepTimeElement.LocalName == "time")
+                if (prepTimeElement?.LocalName == "time")
                 {
                     prepTime = prepTimeElement.GetAttribute("datetime");
                 }
+                else if (prepTimeElement?.LocalName == "meta")
+                {
+                    prepTime = prepTimeElement.GetAttribute("content");
+                }
                 else
                 {
-                    prepTime = prepTimeElement.InnerHtml.Trim();
+                    prepTime = prepTimeElement?.InnerHtml.Trim();
                 }
             }
 
@@ -227,13 +240,17 @@ namespace RecipeScraper.Scrapers
             if (string.IsNullOrEmpty(cookTime))
             {
                 var cookTimeElement = GetSingleItemPropElement("cookTime");
-                if (cookTimeElement.LocalName == "time")
+                if (cookTimeElement?.LocalName == "time")
                 {
                     cookTime = cookTimeElement.GetAttribute("datetime");
                 }
+                else if (cookTimeElement?.LocalName == "meta")
+                {
+                    cookTime = cookTimeElement.GetAttribute("content");
+                }
                 else
                 {
-                    cookTime = cookTimeElement.InnerHtml.Trim();
+                    cookTime = cookTimeElement?.InnerHtml.Trim();
                 }
             }
 
