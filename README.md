@@ -1,8 +1,8 @@
 # RecipeScraper
 
-RecipeScraper is a .Net Standard library I created for my website [Mealzer.com](https://mealzer.com/) that uses Anglesharp. The goal of this project was to be able to pass it a url of a webpage containing a recipe and it returns an object.
+RecipeScraper is a .Net Standard library I created for my website that uses Anglesharp parser library. The goal of this project was to be able to pass it a url of a webpage containing a recipe and it returns an object.
 
-### [Releases](https://gitlab.com/simon.foley/RecipeScraper/-/tags)
+### [Releases](https://github.com/simfoley/RecipeScraper/releases)
 
 ## Usage
 
@@ -21,7 +21,7 @@ var scrapedRecipe = scraper.ScrapeRecipe();
 
 ## Contribution and Possible Improvements
 
-Merge requests are welcome. If you find a website with recipe pages not supported by the library, you can add a new scraper.
+Pull requests are welcome. If you find a website with recipe pages not supported by the library, you can add a new scraper.
 
 
 

@@ -1,0 +1,25 @@
+on:
+  push:
+    tags:
+    - "[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  publish-nuget:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.x
+    - name: Set VERSION variable from tag
+      run: echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+    - name: Install dependencies
+      run: dotnet restore
+    - name: Pack
+      run: dotnet pack --configuration Release RecipeScraper/RecipeScraper.csproj --output . /p:Version=${VERSION}
+    - name: PushNuget
+      run: dotnet nuget push *.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_API_KEY }} --skip-duplicate
