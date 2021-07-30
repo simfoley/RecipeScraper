@@ -1,5 +1,10 @@
 # RecipeScraper
 
+[![NuGet version (RecipeScraper)](https://img.shields.io/nuget/v/RecipeScraper.svg?style=flat-square)](https://www.nuget.org/packages/RecipeScraper/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![build](https://github.com/simfoley/RecipeScraper/actions/workflows/release.yml/badge.svg)](https://github.com/simfoley/RecipeScraper/actions/workflows/release.yml)
+[![Github All Releases](https://img.shields.io/nuget/dt/RecipeScraper)](https://github.com/simfoley/RecipeScraper/releases)
+
 RecipeScraper is a .Net Standard library I created for my website that uses Anglesharp parser library. The goal of this project was to be able to pass it a url of a webpage containing a recipe and it returns an object.
 
 ### [Releases](https://github.com/simfoley/RecipeScraper/releases)
@@ -10,7 +15,7 @@ Install the RecipeScraper Nuget Package.
 
 `dotnet add package RecipeScraper`
 
-## Usage
+Use it in your code by calling the factory with the recipe page url.
 
 ```
 using RecipeScraper;
