@@ -1,11 +1,13 @@
-﻿using RecipeScraper.Scrapers;
+﻿using RecipeScraperLib.Scrapers;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace RecipeScraper
+[assembly: InternalsVisibleTo("RecipeScraper.IntegrationTests")]
+namespace RecipeScraperLib.Factory
 {
-    public static class ScraperFactory
+    internal static class ScraperFactory
     {
         private static Dictionary<String, Func<String, BaseScraper>> scrapers;
 

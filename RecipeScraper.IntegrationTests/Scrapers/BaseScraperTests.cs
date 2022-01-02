@@ -1,8 +1,9 @@
-using RecipeScraper.Scrapers;
+using RecipeScraperLib.Factory;
+using RecipeScraperLib.Scrapers;
 using System;
 using Xunit;
 
-namespace RecipeScraper.IntegrationTests.Scrapers
+namespace RecipeScraperLib.IntegrationTests.Scrapers
 {
     public class BaseScraperTests
     {
