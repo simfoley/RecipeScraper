@@ -18,10 +18,9 @@ Install the RecipeScraper Nuget Package.
 Use it in your code by calling the factory with the recipe page url.
 
 ```
-using RecipeScraper;
+using RecipeScraperLib;
 
-var scraper = ScraperFactory.GetScraper(url);
-var scrapedRecipe = scraper.ScrapeRecipe();
+var scrapedRecipe = RecipeScraper.ScrapeRecipe("https://www.foodnetwork.com/recipes/food-network-kitchen/baked-pork-chop-3631185");
 ```
 
 ## Contribution and Possible Improvements
