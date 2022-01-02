@@ -1,4 +1,4 @@
-﻿using RecipeScraper.Models;
+﻿using RecipeScraperLib.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -10,7 +10,7 @@ using System.Text.Json;
 using System.Xml;
 using System.Text.RegularExpressions;
 
-namespace RecipeScraper.Scrapers
+namespace RecipeScraperLib.Scrapers
 {
     //The BaseScraper should be able to handle pages compliant with http://schema.org/Recipe object, either with Json LD or with Microdata or both
     public class BaseScraper

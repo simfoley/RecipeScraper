@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace RecipeScraper.Models
+namespace RecipeScraperLib.Models
 {
     public class ScrappedRecipe
     {

@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using RecipeScraper;
-using RecipeScraper.Scrapers;
+using RecipeScraperLib;
+using RecipeScraperLib.Factory;
+using RecipeScraperLib.Scrapers;
 using Xunit;
 
-namespace RecipeScraper.IntegrationTests
+namespace RecipeScraperLib.IntegrationTests
 {
     public class ScraperFactoryTests
     {
