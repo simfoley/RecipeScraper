@@ -341,10 +341,27 @@ namespace RecipeScraperLib.Scrapers
 
         private void SetRecipeJson()
         {
-            var jsonLdRecipeElement = _pageContent.Scripts.FirstOrDefault(x => x.Type == "application/ld+json" && x.InnerHtml.Contains("\"@type\": \"Recipe\""));
-            if (jsonLdRecipeElement != null)
+            foreach (var htmlElement in _pageContent.Scripts.Where(x => x.Type == "application/ld+json" && (x.InnerHtml.Contains("\"@type\":\"Recipe\"") || x.InnerHtml.Contains("\"@type\": \"Recipe\""))))
             {
-                _jsonRecipe = JsonDocument.Parse(jsonLdRecipeElement.InnerHtml).RootElement;
+                var jsonElement = JsonDocument.Parse(htmlElement.InnerHtml).RootElement;
+
+                //Sometimes the recipe object is directly inside the script element, other times its in a json array
+                if (jsonElement.ValueKind == JsonValueKind.Object && jsonElement.TryGetProperty("@type", out JsonElement type) && type.GetString() == "Recipe")
+                {
+                    _jsonRecipe = jsonElement;
+                    return;
+                }
+                else if (jsonElement.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var innerJsonElement in jsonElement.EnumerateArray())
+                    {
+                        if (innerJsonElement.ValueKind == JsonValueKind.Object && innerJsonElement.TryGetProperty("@type", out JsonElement innerType) && innerType.GetString() == "Recipe")
+                        {
+                            _jsonRecipe = innerJsonElement;
+                            return;
+                        }
+                    }
+                }
             }
         }
 
