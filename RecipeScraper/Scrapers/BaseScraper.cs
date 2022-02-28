@@ -118,6 +118,10 @@ namespace RecipeScraperLib.Scrapers
             if (_jsonRecipe.ValueKind != JsonValueKind.Undefined)
             {
                 var imageProperty = _jsonRecipe.GetProperty("image");
+                if (imageProperty.ValueKind == JsonValueKind.Array)
+                {
+                    imageSource = imageProperty[0].GetString();
+                }
                 if (imageProperty.ValueKind == JsonValueKind.Object)
                 {
                     if (imageProperty.GetProperty("url").ValueKind == JsonValueKind.String)
