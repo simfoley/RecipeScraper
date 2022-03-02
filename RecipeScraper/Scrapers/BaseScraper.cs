@@ -55,7 +55,8 @@ namespace RecipeScraperLib.Scrapers
                 PrepTime = IgnoreExceptions(() => GetPrepTime(), new TimeSpan()),
                 CookTime = IgnoreExceptions(() => GetCookTime(), new TimeSpan()),
                 RecipeIngredients = IgnoreExceptions(() => GetRecipeIngredients(), new string[0]),
-                RecipeInstructions = IgnoreExceptions(() => GetRecipeInstructions(), new string[0])
+                RecipeInstructions = IgnoreExceptions(() => GetRecipeInstructions(), new string[0]),
+                RecipeLanguageISOCode = IgnoreExceptions(() => GetRecipeLanguageISOCode(), "en")
             };
         }
 
@@ -331,6 +332,11 @@ namespace RecipeScraperLib.Scrapers
             }
 
             return recipeInstructions.ToArray();
+        }
+
+        public virtual string GetRecipeLanguageISOCode()
+        {
+            return _pageContent.DocumentElement.GetAttribute("lang").ToString().Substring(0, 2);
         }
 
         protected IElement GetSingleItemPropElement(string itemPropName)

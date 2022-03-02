@@ -58,7 +58,7 @@ namespace RecipeScraperLib.IntegrationTests.Scrapers
             var recipeImage = _jsonLdScraper.GetImage();
 
             //Assert
-            Assert.Equal("https://images.ricardocuisine.com/services/recipes/9043.jpg", recipeImage);
+            Assert.Equal("https://images.ricardocuisine.com/services/recipes/1x1/9043.jpg", recipeImage);
         }
 
         [Fact]

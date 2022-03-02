@@ -14,5 +14,6 @@ namespace RecipeScraperLib.Models
 
         public string[] RecipeIngredients { get; set; }
         public string[] RecipeInstructions { get; set; }
+        public string RecipeLanguageISOCode { get; set; }
     }
 }
