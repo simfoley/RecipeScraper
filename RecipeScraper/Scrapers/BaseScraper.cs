@@ -310,11 +310,14 @@ namespace RecipeScraperLib.Scrapers
             //Microdata
             if (!recipeInstructions.Any())
             {
-                var instructionsElement = GetSingleItemPropElement("recipeInstructions");
-                if (instructionsElement != null)
+                var instructionsElements = GetMultipleItemPropElements("recipeInstructions");
+                foreach (var instructionsElement in instructionsElements)
                 {
-                    //Check current element is the list already or one children deeper
-                    if (instructionsElement.FirstElementChild.Children.Count() == 0)
+                    if (instructionsElement.FirstElementChild == null)
+                    {
+                        recipeInstructions.Add(instructionsElement.TextContent.Trim());
+                    }
+                    else if (instructionsElement.FirstElementChild.Children.Count() == 0)
                     {
                         foreach (var ingredient in instructionsElement.Children.ToArray())
                         {
