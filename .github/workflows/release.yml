@@ -12,11 +12,11 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
+      uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v2
       with:
-        dotnet-version: 3.1.x
+        dotnet-version: 5.0.x
     - name: Set VERSION variable from tag
       run: echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
     - name: Install dependencies
