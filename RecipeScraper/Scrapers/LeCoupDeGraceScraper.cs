@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace RecipeScraperLib.Scrapers
 {
-    public class LeCoupDeGraceScraper : BaseScraper
+    internal class LeCoupDeGraceScraper : BaseScraper
     {
         public LeCoupDeGraceScraper(string url) : base(url)
         { 
