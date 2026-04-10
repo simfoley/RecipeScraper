@@ -11,7 +11,7 @@ RecipeScraper is a .NET library that extracts recipe data from any web page. Pas
 
 ## Requirements
 
-- .NET 5.0+
+- .NET 10.0+
 
 ## Usage
 

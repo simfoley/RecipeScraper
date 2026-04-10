@@ -23,7 +23,7 @@ dotnet pack --configuration Release RecipeScraper/RecipeScraper.csproj --output 
 
 ## Architecture
 
-RecipeScraper is a .NET 5 class library (distributed as NuGet) that extracts structured recipe data from web pages. Entry point is the static `RecipeScraper.ScrapeRecipe(url)` method.
+RecipeScraper is a .NET 10 class library (distributed as NuGet) that extracts structured recipe data from web pages. Entry point is the static `RecipeScraper.ScrapeRecipe(url)` method.
 
 ### Scraping Pipeline
 
