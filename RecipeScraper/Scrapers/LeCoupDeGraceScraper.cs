@@ -1,31 +1,24 @@
-﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Linq;
 
-namespace RecipeScraperLib.Scrapers
+namespace RecipeScraper.Scrapers;
+
+internal class LeCoupDeGraceScraper : RecipeScraperBase
 {
-    internal class LeCoupDeGraceScraper : BaseScraper
+    public override string? GetYield()
     {
-        public LeCoupDeGraceScraper(string url) : base(url)
-        { 
-        }
+        var yieldElement = _pageContent.All.FirstOrDefault(x => x.HasAttribute("class") && x.GetAttribute("class")!.StartsWith("portions"));
+        return yieldElement!.Children.FirstOrDefault(x => x.HasAttribute("class") && x.GetAttribute("class")!.StartsWith("info"))?.TextContent;
+    }
 
-        public override string GetYield()
+    public override string[] GetRecipeInstructions()
+    {
+        var recipeInstructions = new List<string>();
+        var instructionsElement = _pageContent.All.FirstOrDefault(x => x.HasAttribute("class") && x.GetAttribute("class")!.StartsWith("list-checked-wrap order-list"));
+        foreach (var instruction in instructionsElement!.FirstElementChild!.Children)
         {
-            var yieldElement = _pageContent.All.FirstOrDefault(x => x.HasAttribute("class") && x.GetAttribute("class").StartsWith("portions"));
-            return yieldElement.Children.FirstOrDefault(x => x.HasAttribute("class") && x.GetAttribute("class").StartsWith("info")).TextContent;
+            recipeInstructions.Add(instruction.TextContent);
         }
-
-        public override string[] GetRecipeInstructions()
-        {
-            var recipeInstructions = new List<string>();
-            var instrctionsElement = _pageContent.All.FirstOrDefault(x => x.HasAttribute("class") && x.GetAttribute("class").StartsWith("list-checked-wrap order-list"));
-            foreach (var instruction in instrctionsElement.FirstElementChild.Children)
-            {
-                recipeInstructions.Add(instruction.TextContent);
-            }
-            return recipeInstructions.ToArray();
-        }
+        return recipeInstructions.ToArray();
     }
 }

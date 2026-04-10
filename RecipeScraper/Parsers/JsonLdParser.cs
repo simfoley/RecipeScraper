@@ -1,25 +1,25 @@
 ﻿using AngleSharp.Dom;
-using RecipeScraper.Scrapers.FromatScrapers;
+using RecipeScraper.Parsers.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.Json;
+using System.Xml;
 
-namespace RecipeScraper.Scrapers.FormatScrapers
+namespace RecipeScraper.Parsers
 {
-    internal class JsonLdScraper : IFormatScraper
+    internal class JsonLdParser : IDocumentParser
     {
         private JsonElement _jsonRecipe;
         public bool IsActive => _jsonRecipe.ValueKind != JsonValueKind.Undefined;
-        
-        public JsonLdScraper(IDocument pageContent)
+
+        public JsonLdParser(IDocument pageContent)
         {
             foreach (var htmlElement in pageContent.Scripts.Where(x => x.Type == "application/ld+json" && (x.InnerHtml.Contains("\"@type\":\"Recipe\"") || x.InnerHtml.Contains("\"@type\": \"Recipe\""))))
             {
                 var jsonElement = JsonDocument.Parse(htmlElement.InnerHtml).RootElement;
 
-                
+
                 if (jsonElement.ValueKind == JsonValueKind.Object && jsonElement.TryGetProperty("@type", out JsonElement recipeType) && recipeType.GetString() == "Recipe")
                 {
                     _jsonRecipe = jsonElement;
@@ -34,7 +34,7 @@ namespace RecipeScraper.Scrapers.FormatScrapers
                             _jsonRecipe = graphElement;
                             return;
                         }
-                    }    
+                    }
                 }
                 else if (jsonElement.ValueKind == JsonValueKind.Array)
                 {
@@ -50,88 +50,87 @@ namespace RecipeScraper.Scrapers.FormatScrapers
             }
         }
 
-        public string GetName()
+        public string? GetName()
         {
-            string name = null;
-            
-            if (_jsonRecipe.GetProperty("name").ValueKind == JsonValueKind.String)
+            if (_jsonRecipe.TryGetProperty("name", out JsonElement nameElement) && nameElement.ValueKind == JsonValueKind.String)
             {
-                name = _jsonRecipe.GetProperty("name").GetString();
+                return nameElement.GetString();
             }
 
-            return name;
+            return null;
         }
 
-        public string GetImage()
+        public string? GetImage()
         {
-            string imageSource = null;
-
-            var imageProperty = _jsonRecipe.GetProperty("image");
-            if (imageProperty.ValueKind == JsonValueKind.Array)
+            if (_jsonRecipe.TryGetProperty("image", out JsonElement imageElement))
             {
-                imageSource = imageProperty[0].GetString();
-            }
-            if (imageProperty.ValueKind == JsonValueKind.Object)
-            {
-                if (imageProperty.GetProperty("url").ValueKind == JsonValueKind.String)
+                switch (imageElement.ValueKind)
                 {
-                    imageSource = imageProperty.GetProperty("url").GetString();
+                    case JsonValueKind.Array:
+                        return imageElement[0].GetString();
+                    case JsonValueKind.String:
+                        return imageElement.GetString();
+                    case JsonValueKind.Object:
+                        {
+                            if (imageElement.TryGetProperty("url", out JsonElement url) && url.ValueKind == JsonValueKind.String)
+                            {
+                                return url.GetString();
+                            }
+
+                            break;
+                        }
                 }
             }
-            else if (imageProperty.ValueKind == JsonValueKind.String)
-            {
-                imageSource = imageProperty.GetString();
-            }
 
-            return imageSource;
+            return null;
         }
 
-        public string GetYield()
+        public string? GetYield()
         {
-            string yield = null;
-            
-            if (_jsonRecipe.GetProperty("recipeYield").ValueKind == JsonValueKind.String)
+            if (_jsonRecipe.TryGetProperty("recipeYield", out JsonElement yieldElement) && yieldElement.ValueKind == JsonValueKind.String)
             {
-                yield = _jsonRecipe.GetProperty("recipeYield").GetString();
+                return yieldElement.GetString();
             }
 
-            return yield;
+            return null;
         }
 
-        public string GetPrepTime()
+        public TimeSpan? GetPrepTime()
         {
-            string prepTime = string.Empty;
-
-            //Json LD
-            if (_jsonRecipe.GetProperty("prepTime").ValueKind == JsonValueKind.String)
+            if (_jsonRecipe.TryGetProperty("prepTime", out JsonElement prepTimeElement) && prepTimeElement.ValueKind == JsonValueKind.String)
             {
-                prepTime = _jsonRecipe.GetProperty("prepTime").GetString();
+                string? prepTime = prepTimeElement.GetString();
+                if (!string.IsNullOrEmpty(prepTime))
+                    return XmlConvert.ToTimeSpan(prepTime);
             }
 
-            return prepTime;
+            return null;
         }
 
-        public string GetCookTime()
+        public TimeSpan? GetCookTime()
         {
-            string cookTime = string.Empty;
-            
-            if (_jsonRecipe.GetProperty("cookTime").ValueKind == JsonValueKind.String)
+            if (_jsonRecipe.TryGetProperty("cookTime", out JsonElement cookTimeElement) && cookTimeElement.ValueKind == JsonValueKind.String)
             {
-                cookTime = _jsonRecipe.GetProperty("cookTime").GetString();
+                string? cookTime = cookTimeElement.GetString();
+                if (!string.IsNullOrEmpty(cookTime))
+                    return XmlConvert.ToTimeSpan(cookTime);
             }
 
-            return cookTime;
+            return null;
         }
 
         public List<string> GetRecipeIngredients()
         {
             var recipeIngredients = new List<string>();
-            
-            foreach (var ingredient in _jsonRecipe.GetProperty("recipeIngredient").EnumerateArray())
+
+            if (_jsonRecipe.TryGetProperty("recipeIngredient", out JsonElement recipeIngredientsElement) && recipeIngredientsElement.ValueKind == JsonValueKind.Array)
             {
-                if (ingredient.ValueKind == JsonValueKind.String)
+                foreach (var ingredient in recipeIngredientsElement.EnumerateArray())
                 {
-                    recipeIngredients.Add(ingredient.ToString());
+                    if (ingredient.ValueKind == JsonValueKind.String)
+                    {
+                        recipeIngredients.Add(ingredient.ToString());
+                    }
                 }
             }
 
@@ -140,20 +139,16 @@ namespace RecipeScraper.Scrapers.FormatScrapers
 
         public List<string> GetRecipeInstructions()
         {
-            var recipeInstructions = new List<string>();
-
-            //Json LD
-            if (_jsonRecipe.ValueKind != JsonValueKind.Undefined)
+            if (_jsonRecipe.TryGetProperty("recipeInstructions", out JsonElement recipeInstructionsElement))
             {
-                var instructionSection = _jsonRecipe.GetProperty("recipeInstructions");
-                recipeInstructions.AddRange(GetRecipeInstrctionsRecursive(instructionSection));
+                return GetRecipeInstructionsRecursive(recipeInstructionsElement);
             }
 
-            return recipeInstructions;
+            return new List<string>();
         }
 
         //Because recipeInstruction can be in different formats in json-ld, just recurse through the json and keep the "text" properties values. 
-        private List<string> GetRecipeInstrctionsRecursive(JsonElement element, int recurseCount = 0)
+        private List<string> GetRecipeInstructionsRecursive(JsonElement element, int recurseCount = 0)
         {
             var result = new List<string>();
 
@@ -166,7 +161,7 @@ namespace RecipeScraper.Scrapers.FormatScrapers
             {
                 foreach (var item in element.EnumerateArray())
                 {
-                    result.AddRange(GetRecipeInstrctionsRecursive(item, recurseCount));
+                    result.AddRange(GetRecipeInstructionsRecursive(item, recurseCount));
                 }
             }
             else if (element.ValueKind == JsonValueKind.Object)
@@ -175,7 +170,7 @@ namespace RecipeScraper.Scrapers.FormatScrapers
                 {
                     if (item.Value.ValueKind == JsonValueKind.Object || item.Value.ValueKind == JsonValueKind.Array)
                     {
-                        result.AddRange(GetRecipeInstrctionsRecursive(item.Value, recurseCount));
+                        result.AddRange(GetRecipeInstructionsRecursive(item.Value, recurseCount));
                     }
                     else if (item.Name == "text")
                     {

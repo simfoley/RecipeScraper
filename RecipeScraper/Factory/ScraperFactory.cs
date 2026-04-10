@@ -1,49 +1,35 @@
-﻿using RecipeScraperLib.Scrapers;
+using RecipeScraper.Models;
+using RecipeScraper.Scrapers;
+using RecipeScraper.Scrapers.Abstractions;
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Text;
 
-[assembly: InternalsVisibleTo("RecipeScraper.IntegrationTests")]
-namespace RecipeScraperLib.Factory
+namespace RecipeScraper.Factory;
+
+public class ScraperFactory : IScraperFactory
 {
-    internal static class ScraperFactory
+    private readonly Dictionary<string, Func<RecipeScraperBase>> _scrapers;
+
+    public ScraperFactory() : this(new RecipeScraperOptions()) { }
+
+    public ScraperFactory(RecipeScraperOptions options)
     {
-        private static Dictionary<String, Func<String, BaseScraper>> scrapers;
-
-        public static BaseScraper GetScraper(string url)
+        _scrapers = new Dictionary<string, Func<RecipeScraperBase>>
         {
-            string hostname = new Uri(url).Host.Replace("www.", "");
+            { "lecoupdegrace.ca", () => new LeCoupDeGraceScraper() }
+        };
 
-            if (!scrapers.ContainsKey(hostname)) 
-            {
-                //Verify that the webpage page contains a schema.org recipe object to scrap
-                var scraper = new BaseScraper(url);
+        foreach (var (hostname, factory) in options.CustomScrapers)
+            _scrapers[hostname] = factory;
+    }
 
-                if (!scraper.PageContentIsValid())
-                {
-                    throw new NotSupportedException("This webpage does not contain a schema.org recipe object to scrap.");
-                }
+    public IRecipeScraper GetScraper(string url)
+    {
+        string hostname = new Uri(url).Host.Replace("www.", "");
 
-                return scraper;
-            }
+        if (_scrapers.TryGetValue(hostname, out var factory))
+            return factory();
 
-            Func<String, BaseScraper> create = scrapers[hostname];
-
-            return create(url);
-        }
-        
-        public static void AddCustomScraper(string hostname, Func<string, BaseScraper> customScraper)
-        {
-            scrapers.Add(hostname, customScraper);
-        }
-
-        static ScraperFactory()
-        {
-            scrapers = new Dictionary<string, Func<string, BaseScraper>>()
-            {
-                { "lecoupdegrace.ca",  (x) => new LeCoupDeGraceScraper(x)}
-            };
-        }
+        return new RecipeScraperBase();
     }
 }

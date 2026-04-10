@@ -21,64 +21,80 @@ Install the NuGet package:
 dotnet add package RecipeScraper
 ```
 
-Call `ScrapeRecipe` with a recipe page URL:
+Register the service in your DI container:
 
 ```csharp
-using RecipeScraperLib;
+using RecipeScraper.Extensions;
 
-var recipe = RecipeScraper.ScrapeRecipe("https://www.foodnetwork.com/recipes/food-network-kitchen/baked-pork-chop-3631185");
+builder.Services.AddRecipeScraper();
+```
+
+Inject `IRecipeScraperService` and call `ScrapeRecipe`:
+
+```csharp
+using RecipeScraper.Service;
+
+public class MyClass(IRecipeScraperService scraper)
+{
+    public async Task Run()
+    {
+        var recipe = await scraper.ScrapeRecipe("https://www.foodnetwork.com/recipes/food-network-kitchen/baked-pork-chop-3631185");
+    }
+}
 ```
 
 ### Return value
 
-`ScrapeRecipe` returns a `ScrappedRecipe` object with the following properties:
+`ScrapeRecipe` returns a `ScrapedRecipe` object with the following properties:
 
-| Property                | Type       | Description                        |
-| ----------------------- | ---------- | ---------------------------------- |
-| `Name`                  | `string`   | Recipe name                        |
-| `Image`                 | `string`   | Image URL                          |
-| `Yield`                 | `string`   | Serving size / yield               |
-| `PrepTime`              | `TimeSpan` | Preparation time                   |
-| `CookTime`              | `TimeSpan` | Cook time                          |
-| `RecipeIngredients`     | `string[]` | List of ingredients                |
-| `RecipeInstructions`    | `string[]` | List of instruction steps          |
-| `RecipeLanguageISOCode` | `string`   | Language of the page (e.g. `"en"`) |
+| Property                | Type        | Description                        |
+| ----------------------- | ----------- | ---------------------------------- |
+| `Name`                  | `string?`   | Recipe name                        |
+| `Image`                 | `string?`   | Image URL                          |
+| `Yield`                 | `string?`   | Serving size / yield               |
+| `PrepTime`              | `TimeSpan?` | Preparation time                   |
+| `CookTime`              | `TimeSpan?` | Cook time                          |
+| `RecipeIngredients`     | `string[]`  | List of ingredients                |
+| `RecipeInstructions`    | `string[]`  | List of instruction steps          |
+| `RecipeLanguageISOCode` | `string?`   | Language of the page (e.g. `"en"`) |
 
-If a field cannot be found, it defaults to `null`, an empty array, or an empty `TimeSpan`.
+If a field cannot be found, it defaults to `null` or an empty array.
 
 ## Custom Scrapers
 
-If a site doesn't use schema.org markup, you can register a site-specific scraper by inheriting from `BaseScraper` and overriding whichever methods you need:
+If a site doesn't use schema.org markup, you can register a site-specific scraper by inheriting from `RecipeScraperBase` and overriding whichever methods you need:
 
 ```csharp
-using RecipeScraperLib;
-using RecipeScraperLib.Scrapers;
+using RecipeScraper.Scrapers;
 
-public class MySiteScraper : BaseScraper
+public class MySiteScraper : RecipeScraperBase
 {
-    public MySiteScraper(string url) : base(url) { }
-
     public override string[] GetRecipeIngredients()
     {
         // custom HTML parsing using _pageContent (AngleSharp IDocument)
+        return [];
     }
 }
+```
 
-// Register before scraping
-RecipeScraper.AddCustomScraper("mysite.com", url => new MySiteScraper(url));
+Register it via the options callback in `AddRecipeScraper`:
 
-var recipe = RecipeScraper.ScrapeRecipe("https://www.mysite.com/recipes/example");
+```csharp
+builder.Services.AddRecipeScraper(options =>
+{
+    options.AddCustomScraper<MySiteScraper>("mysite.com");
+});
 ```
 
 ## Contributing
 
-Pull requests are welcome. The library tries three scraping strategies in priority order:
+Pull requests are welcome. The library tries three parsing strategies in priority order:
 
 1. **JSON-LD** — `<script type="application/ld+json">` containing a `schema.org/Recipe` object
 2. **Microdata** — inline `itemtype="http://schema.org/Recipe"` attributes
-3. **HTML tree** — fallback HTML parsing
+3. **HTML tree** — fallback heuristic HTML parsing
 
-To add support for a new site, create a class that inherits `BaseScraper`, override the methods that differ, and register it in `ScraperFactory` (or let users register it via `AddCustomScraper`). Integration tests live in the `RecipeScraper.IntegrationTests` project.
+To add support for a new site, create a class that inherits `RecipeScraperBase`, override the methods that differ, and register it via `AddCustomScraper`. Integration tests live in the `RecipeScraper.IntegrationTests` project.
 
 ## License
 

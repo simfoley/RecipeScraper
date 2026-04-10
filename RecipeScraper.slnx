@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="RecipeScraper\RecipeScraper.csproj" />
+  <Project Path="RecipeScraper.IntegrationTests\RecipeScraper.IntegrationTests.csproj" />
+  <Project Path="RecipeScraper.UnitTests\RecipeScraper.UnitTests.csproj" />
+</Solution>
