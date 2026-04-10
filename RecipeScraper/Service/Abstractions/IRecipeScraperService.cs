@@ -1,7 +1,7 @@
 using RecipeScraper.Models;
 using System.Threading.Tasks;
 
-namespace RecipeScraper.Service;
+namespace RecipeScraper.Service.Abstractions;
 
 public interface IRecipeScraperService
 {

@@ -1,7 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using RecipeScraper.Factory;
+using RecipeScraper.Factory.Abstractions;
 using RecipeScraper.Models;
 using RecipeScraper.Service;
+using RecipeScraper.Service.Abstractions;
 using System;
 
 namespace RecipeScraper.Extensions;

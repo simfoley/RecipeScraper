@@ -1,5 +1,6 @@
-using RecipeScraper.Factory;
+using RecipeScraper.Factory.Abstractions;
 using RecipeScraper.Models;
+using RecipeScraper.Service.Abstractions;
 using System.Threading.Tasks;
 
 namespace RecipeScraper.Service;

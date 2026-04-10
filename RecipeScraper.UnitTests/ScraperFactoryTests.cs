@@ -1,4 +1,6 @@
 using RecipeScraper.Factory;
+using RecipeScraper.Factory.Abstractions;
+using RecipeScraper.Models;
 using RecipeScraper.Scrapers;
 using System;
 using Xunit;

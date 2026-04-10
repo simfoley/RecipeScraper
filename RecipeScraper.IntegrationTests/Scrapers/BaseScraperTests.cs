@@ -1,5 +1,6 @@
 using RecipeScraper.Factory;
 using RecipeScraper.Models;
+using RecipeScraper.Service;
 using System;
 using Xunit;
 

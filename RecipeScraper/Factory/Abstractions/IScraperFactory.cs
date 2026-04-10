@@ -1,6 +1,6 @@
 using RecipeScraper.Scrapers.Abstractions;
 
-namespace RecipeScraper.Factory;
+namespace RecipeScraper.Factory.Abstractions;
 
 public interface IScraperFactory
 {
