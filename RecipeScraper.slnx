@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="CLAUDE.md" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="RecipeScraper.IntegrationTests\RecipeScraper.IntegrationTests.csproj" />
+  <Project Path="RecipeScraper.UnitTests\RecipeScraper.UnitTests.csproj" />
+  <Project Path="RecipeScraper\RecipeScraper.csproj" />
+</Solution>

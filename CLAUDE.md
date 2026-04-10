@@ -1,63 +1,85 @@
-# CLAUDE.md
+# RecipeScraper — Codebase Guide
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Project structure
 
-## Commands
+```
+RecipeScraper/                        # Main library
+  Extensions/
+    ServiceCollectionExtensions.cs    # AddRecipeScraper() DI extension
+  Factory/
+    Abstractions/IScraperFactory.cs   # GetScraper(url) interface
+    ScraperFactory.cs                 # Hostname-based scraper lookup
+  Models/
+    RecipeScraperOptions.cs           # Options / custom scraper registration
+    ScrapedRecipe.cs                  # Return model
+  Parsers/
+    Abstractions/IDocumentParser.cs   # Interface for all parsers
+    JsonLdParser.cs                   # Parses schema.org JSON-LD scripts
+    MicrodataParser.cs                # Parses schema.org Microdata attributes
+    HtmlTreeParser.cs                 # Heuristic HTML tree fallback
+  Scrapers/
+    Abstractions/IRecipeScraper.cs    # ScrapeRecipe(url) interface
+    RecipeScraperBase.cs              # Base class: fetches page, runs parsers
+    LeCoupDeGraceScraper.cs           # Site-specific scraper example
+  Service/
+    Abstractions/IRecipeScraperService.cs
+    RecipeScraperService.cs           # Public entry point via DI
+  Helpers/
+    AngleSharpHelpers.cs              # DOM traversal utilities
+
+RecipeScraper.IntegrationTests/       # xUnit integration tests (real HTTP)
+RecipeScraper.UnitTests/              # xUnit unit tests (no IO)
+```
+
+## How it works
+
+1. A consumer calls `IRecipeScraperService.ScrapeRecipe(url)`
+2. `RecipeScraperService` delegates to `IScraperFactory.GetScraper(url)` — a pure hostname lookup that returns the appropriate `IRecipeScraper`
+3. `IRecipeScraper.ScrapeRecipe(url)` (implemented by `RecipeScraperBase`) fetches the page via AngleSharp and initialises three parsers in priority order: `JsonLdParser` → `MicrodataParser` → `HtmlTreeParser`
+4. Each `Get*` method iterates the parsers and returns the first non-null result
+
+## Entry point for consumers
+
+```csharp
+// Registration
+builder.Services.AddRecipeScraper(options =>
+{
+    options.AddCustomScraper<MySiteScraper>("mysite.com");
+});
+
+// Usage
+var recipe = await scraper.ScrapeRecipe(url); // IRecipeScraperService
+```
+
+## Adding a custom scraper
+
+Inherit `RecipeScraperBase` and override any `Get*` virtual methods. `_pageContent` is an AngleSharp `IDocument` available after `ScrapeRecipe` is called.
+
+```csharp
+public class MySiteScraper : RecipeScraperBase
+{
+    public override string[] GetRecipeIngredients() { ... }
+}
+```
+
+Register it with `options.AddCustomScraper<MySiteScraper>("hostname.com")`.
+
+## Build & test
 
 ```bash
-# Build
 dotnet build
-
-# Run all tests
 dotnet test
-
-# Run a single test class
-dotnet test --filter "FullyQualifiedName~ScraperFactoryTests"
-
-# Run a single test method
-dotnet test --filter "FullyQualifiedName~BaseScraper_GetNameFromJsonLdWebpage_NameIsReturned"
-
-# Pack NuGet package
-dotnet pack --configuration Release RecipeScraper/RecipeScraper.csproj --output . /p:Version=X.X.X
 ```
 
-## Architecture
+Integration tests make real HTTP requests. Unit tests in `RecipeScraper.UnitTests` are pure (no IO).
 
-RecipeScraper is a .NET 10 class library (distributed as NuGet) that extracts structured recipe data from web pages. Entry point is the static `RecipeScraper.ScrapeRecipe(url)` method.
+## Key namespaces
 
-### Scraping Pipeline
-
-```
-RecipeScraper.ScrapeRecipe(url)
-  → ScraperFactory.GetScraper(url)         # hostname lookup → custom scraper or BaseScraper
-  → BaseScraper fetches page via AngleSharp
-  → For each field, tries format scrapers in order:
-      1. JsonLdScraper      (schema.org JSON-LD in <script> tags)
-      2. MicrodataScraper   (HTML5 itemprop/itemtype attributes)
-      3. HtmlTreeParsingScraper  (heuristic/keyword fallback)
-  → Returns ScrappedRecipe DTO
-```
-
-**Format scrapers** (`IFormatScraper`) are tried in priority order. The first one that returns a non-empty result wins. Each recipe field is extracted independently — a failure on one field does not affect others (wrapped with `IgnoreExceptions()`).
-
-### Extending the Library
-
-**Add support for a new website** — two options:
-1. If the site uses standard schema.org markup, `BaseScraper` handles it automatically.
-2. If the site needs custom parsing, subclass `BaseScraper`, override virtual methods (`GetName()`, `GetRecipeIngredients()`, etc.), and register in `ScraperFactory`'s static constructor with the hostname key.
-
-See `LeCoupDeGraceScraper` as the reference example for a custom scraper.
-
-### Key Namespaces
-
-- `RecipeScraperLib` — public API (`RecipeScraper`, `ScrappedRecipe`)
-- `RecipeScraperLib.Scrapers` — `BaseScraper` and site-specific scrapers
-- `RecipeScraper.Scrapers.FormatScrapers` — `IFormatScraper` + implementations (internal)
-- `RecipeScraperLib.Factory` — `ScraperFactory` (internal)
-- `RecipeScraper.Helpers` — `AngleSharpHelpers` static utilities (internal)
-
-### Tests
-
-Integration tests in `RecipeScraper.IntegrationTests/` hit real URLs (ricardocuisine.com for JSON-LD, metro.ca for microdata). Tests run in parallel (`xunit.runner.json`). Test naming convention: `ClassName_MethodName_ExpectedBehavior`.
-
-CI runs on push/PR to master (`.github/workflows/master.yml`). Releases are triggered by semver tags and publish to NuGet (`.github/workflows/release.yml`).
+| Namespace | Contents |
+|---|---|
+| `RecipeScraper.Service` | `IRecipeScraperService`, `RecipeScraperService` |
+| `RecipeScraper.Models` | `ScrapedRecipe`, `RecipeScraperOptions` |
+| `RecipeScraper.Scrapers` | `RecipeScraperBase`, site-specific scrapers |
+| `RecipeScraper.Parsers` | `JsonLdParser`, `MicrodataParser`, `HtmlTreeParser` |
+| `RecipeScraper.Factory` | `IScraperFactory`, `ScraperFactory` |
+| `RecipeScraper.Extensions` | `AddRecipeScraper()` |

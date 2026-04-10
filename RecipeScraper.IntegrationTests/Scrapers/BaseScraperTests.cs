@@ -1,159 +1,123 @@
-using RecipeScraperLib.Factory;
-using RecipeScraperLib.Scrapers;
+using RecipeScraper.Factory;
+using RecipeScraper.Models;
+using RecipeScraper.Service;
 using System;
 using Xunit;
 
-namespace RecipeScraperLib.IntegrationTests.Scrapers
+namespace RecipeScraper.IntegrationTests.Scrapers
 {
-    public class BaseScraperTests
+    public class ScraperFixture
     {
-        BaseScraper _jsonLdScraper = ScraperFactory.GetScraper("https://www.ricardocuisine.com/en/recipes/9043-barbecue-chicken-skewers-the-best");
-        BaseScraper _microdataScraper = ScraperFactory.GetScraper("https://www.metro.ca/en/recipes-occasions/recipes/vegetable-stew-with-vegetarian-balls");
+        public ScrapedRecipe JsonLdRecipe { get; }
+        public ScrapedRecipe MicrodataRecipe { get; }
 
-        //JsonLd
-        [Fact]
-        public void BaseScraper_GetNameFromJsonLdWebpage_NameIsReturned()
+        public ScraperFixture()
         {
-            //Act
-            var recipeName = _jsonLdScraper.GetName();
+            var service = new RecipeScraperService(new ScraperFactory());
+            JsonLdRecipe = service.ScrapeRecipe("https://www.ricardocuisine.com/en/recipes/9043-barbecue-chicken-skewers-the-best").GetAwaiter().GetResult();
+            MicrodataRecipe = service.ScrapeRecipe("https://www.metro.ca/en/recipes-occasions/recipes/vegetable-stew-with-vegetarian-balls").GetAwaiter().GetResult();
+        }
+    }
 
-            //Assert
-            Assert.Equal("Barbecue Chicken Skewers (The Best)", recipeName);
+    public class BaseScraperTests : IClassFixture<ScraperFixture>
+    {
+        private readonly ScrapedRecipe _jsonLdRecipe;
+        private readonly ScrapedRecipe _microdataRecipe;
+
+        public BaseScraperTests(ScraperFixture fixture)
+        {
+            _jsonLdRecipe = fixture.JsonLdRecipe;
+            _microdataRecipe = fixture.MicrodataRecipe;
+        }
+
+        // Json-LD
+        [Fact]
+        public void JsonLd_Name_IsReturned()
+        {
+            Assert.Equal("Barbecue Chicken Skewers (The Best)", _jsonLdRecipe.Name);
         }
 
         [Fact]
-        public void BaseScraper_GetYieldFromJsonLdWebpage_YieldIsReturned()
+        public void JsonLd_Yield_IsReturned()
         {
-            //Act
-            var recipeYield = _jsonLdScraper.GetYield();
-
-            //Assert
-            Assert.Equal("4 serving(s)", recipeYield);
+            Assert.Equal("4 serving(s)", _jsonLdRecipe.Yield);
         }
 
         [Fact]
-        public void BaseScraper_GetPrepTimeFromJsonLdWebpage_PrepTimeIsReturned()
+        public void JsonLd_PrepTime_IsReturned()
         {
-            //Act
-            var recipePrepTime = _jsonLdScraper.GetPrepTime();
-
-            //Assert
-            Assert.Equal(TimeSpan.FromMinutes(20), recipePrepTime);
+            Assert.Equal(TimeSpan.FromMinutes(20), _jsonLdRecipe.PrepTime);
         }
 
         [Fact]
-        public void BaseScraper_GetCookTimeFromJsonLdWebpage_CookTimeIsReturned()
+        public void JsonLd_CookTime_IsReturned()
         {
-            //Act
-            var recipeCookTime = _jsonLdScraper.GetCookTime();
-
-            //Assert
-            Assert.Equal(TimeSpan.FromMinutes(15), recipeCookTime);
+            Assert.Equal(TimeSpan.FromMinutes(15), _jsonLdRecipe.CookTime);
         }
 
         [Fact]
-        public void BaseScraper_GetImageFromJsonLdWebpage_ImageIsReturned()
+        public void JsonLd_Image_IsReturned()
         {
-            //Act
-            var recipeImage = _jsonLdScraper.GetImage();
-
-            //Assert
-            Assert.Equal("https://images.ricardocuisine.com/services/recipes/1x1/9043.jpg", recipeImage);
+            Assert.Equal("https://images.ricardocuisine.com/services/recipes/1x1/9043.jpg", _jsonLdRecipe.Image);
         }
 
         [Fact]
-        public void BaseScraper_GetIngredientsFromJsonLdWebpage_IngredientsAreReturned()
+        public void JsonLd_Ingredients_AreReturned()
         {
-            //Act
-            var recipeIngredients = _jsonLdScraper.GetRecipeIngredients();
-
-            //Assert
-            Assert.Equal(15, recipeIngredients.Length);
-            Assert.Equal("\u00bd cup (125 ml) buttermilk", recipeIngredients[0]);
+            Assert.Equal(15, _jsonLdRecipe.RecipeIngredients.Length);
+            Assert.Equal("\u00bd cup (125 ml) buttermilk", _jsonLdRecipe.RecipeIngredients[0]);
         }
 
         [Fact]
-        public void BaseScraper_GetInstructionsFromJsonLdWebpage_InstructionsAreReturned()
+        public void JsonLd_Instructions_AreReturned()
         {
-            //Act
-            var recipeInstructions = _jsonLdScraper.GetRecipeInstructions();
-
-            //Assert
-            Assert.Equal(6, recipeInstructions.Length);
-            Assert.Equal("In a glass dish, combine the buttermilk and spices. Add the chicken. Season with salt and pepper. Cover and refrigerate for 24 hours.", recipeInstructions[0]);
+            Assert.Equal(6, _jsonLdRecipe.RecipeInstructions.Length);
+            Assert.Equal("In a glass dish, combine the buttermilk and spices. Add the chicken. Season with salt and pepper. Cover and refrigerate for 24 hours.", _jsonLdRecipe.RecipeInstructions[0]);
         }
 
-        //Microdata
+        // Microdata
         [Fact]
-        public void BaseScraper_GetNameFromMicrodataWebpage_NameIsReturned()
+        public void Microdata_Name_IsReturned()
         {
-            //Act
-            var recipeName = _microdataScraper.GetName();
-
-            //Assert
-            Assert.Equal("Vegetable Stew with Vegetarian Balls", recipeName);
+            Assert.Equal("Vegetable Stew with Vegetarian Balls", _microdataRecipe.Name);
         }
 
         [Fact]
-        public void BaseScraper_GetYieldMicrodataWebpage_YieldIsReturned()
+        public void Microdata_Yield_IsReturned()
         {
-            //Act
-            var recipeYield = _microdataScraper.GetYield();
-
-            //Assert
-            Assert.Equal("4", recipeYield);
+            Assert.Equal("4", _microdataRecipe.Yield);
         }
 
         [Fact]
-        public void BaseScraper_GetPrepTimeFromMicrodataWebpage_PrepTimeIsReturned()
+        public void Microdata_PrepTime_IsReturned()
         {
-            //Act
-            var recipePrepTime = _microdataScraper.GetPrepTime();
-
-            //Assert
-            Assert.Equal(TimeSpan.FromMinutes(30), recipePrepTime);
+            Assert.Equal(TimeSpan.FromMinutes(30), _microdataRecipe.PrepTime);
         }
 
         [Fact]
-        public void BaseScraper_GetCookTimeFromMicrodataWebpage_CookTimeIsReturned()
+        public void Microdata_CookTime_IsReturned()
         {
-            //Act
-            var recipeCookTime = _microdataScraper.GetCookTime();
-
-            //Assert
-            Assert.Equal(TimeSpan.FromMinutes(60), recipeCookTime);
+            Assert.Equal(TimeSpan.FromMinutes(60), _microdataRecipe.CookTime);
         }
 
         [Fact]
-        public void BaseScraper_GetImageFromMicrodataWebpage_ImageIsReturned()
+        public void Microdata_Image_IsReturned()
         {
-            //Act
-            var recipeImage = _microdataScraper.GetImage();
-
-            //Assert
-            Assert.Equal("https://www.metro.ca/userfiles/image/recipes/Ragout-legumes-avec-boulettes-vegetariennes-4935.jpg", recipeImage);
+            Assert.Equal("https://www.metro.ca/userfiles/image/recipes/Ragout-legumes-avec-boulettes-vegetariennes-4935.jpg", _microdataRecipe.Image);
         }
 
         [Fact]
-        public void BaseScraper_GetIngredientsFromMicrodataWebpage_IngredientsAreReturned()
+        public void Microdata_Ingredients_AreReturned()
         {
-            //Act
-            var recipeIngredients = _microdataScraper.GetRecipeIngredients();
-
-            //Assert
-            Assert.Equal(18, recipeIngredients.Length);
-            Assert.Equal("3 carrots, cut into rounds", recipeIngredients[1]);
+            Assert.Equal(18, _microdataRecipe.RecipeIngredients.Length);
+            Assert.Equal("3 carrots, cut into rounds", _microdataRecipe.RecipeIngredients[1]);
         }
 
         [Fact]
-        public void BaseScraper_GetInstructionsFromMicrodataWebpage_InstructionsAreReturned()
+        public void Microdata_Instructions_AreReturned()
         {
-            //Act
-            var recipeInstructions = _microdataScraper.GetRecipeInstructions();
-
-            //Assert
-            Assert.Equal(3, recipeInstructions.Length);
-            Assert.Equal("In a saucepan, simmer the vegetables for 30 minute in the water and soya sauce.", recipeInstructions[0]);
+            Assert.Equal(3, _microdataRecipe.RecipeInstructions.Length);
+            Assert.Equal("In a saucepan, simmer the vegetables for 30 minute in the water and soya sauce.", _microdataRecipe.RecipeInstructions[0]);
         }
     }
 }

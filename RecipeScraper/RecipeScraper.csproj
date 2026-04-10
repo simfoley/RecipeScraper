@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
+	<Nullable>enable</Nullable>
     <PackageProjectUrl>https://github.com/simfoley/RecipeScraper</PackageProjectUrl>
     <Authors>Simon Foley</Authors>
     <Description>
@@ -11,7 +12,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AngleSharp" Version="0.14.0" />
+    <PackageReference Include="AngleSharp" Version="1.4.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.5" />
   </ItemGroup>
 
 </Project>
