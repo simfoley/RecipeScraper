@@ -1,5 +1,6 @@
 using AngleSharp;
 using AngleSharp.Dom;
+using RecipeScraper.Extensions;
 using RecipeScraper.Models;
 using System;
 using System.Collections.Generic;
@@ -24,14 +25,14 @@ public class RecipeScraperBase : IRecipeScraper
 
         return new ScrapedRecipe
         {
-            Name = GetName(),
+            Name = GetName().NormalizeWhitespace(),
             Image = GetImage(),
-            Yield = GetYield(),
+            Yield = GetYield().NormalizeWhitespace(),
             PrepTime = GetPrepTime(),
             CookTime = GetCookTime(),
             TotalTime = GetTotalTime(),
-            RecipeIngredients = GetRecipeIngredients(),
-            RecipeInstructions = GetRecipeInstructions(),
+            RecipeIngredients = GetRecipeIngredients().Select(s => s.NormalizeWhitespace()).Where(s => s != null).ToArray()!,
+            RecipeInstructions = GetRecipeInstructions().Select(s => s.NormalizeWhitespace()).Where(s => s != null).ToArray()!,
             RecipeLanguageISOCode = GetRecipeLanguageISOCode()
         };
     }

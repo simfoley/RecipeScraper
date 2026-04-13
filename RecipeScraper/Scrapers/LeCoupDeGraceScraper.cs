@@ -7,18 +7,11 @@ internal class LeCoupDeGraceScraper : RecipeScraperBase
 {
     public override string? GetYield()
     {
-        var yieldElement = _pageContent.All.FirstOrDefault(x => x.HasAttribute("class") && x.GetAttribute("class")!.StartsWith("portions"));
-        return yieldElement!.Children.FirstOrDefault(x => x.HasAttribute("class") && x.GetAttribute("class")!.StartsWith("info"))?.TextContent;
-    }
-
-    public override string[] GetRecipeInstructions()
-    {
-        var recipeInstructions = new List<string>();
-        var instructionsElement = _pageContent.All.FirstOrDefault(x => x.HasAttribute("class") && x.GetAttribute("class")!.StartsWith("list-checked-wrap order-list"));
-        foreach (var instruction in instructionsElement!.FirstElementChild!.Children)
-        {
-            recipeInstructions.Add(instruction.TextContent);
-        }
-        return recipeInstructions.ToArray();
+        // Each info block shares the same outer class; identify the servings block by its icon
+        var yieldElement = _pageContent.All.FirstOrDefault(x =>
+            x.HasAttribute("class") && x.GetAttribute("class")!.Contains("single-recipe__infos--single") &&
+            x.QuerySelector("[class*='icon-lecoupdegrace-serving']") != null);
+        var contentElement = yieldElement?.Children.FirstOrDefault(x => x.HasAttribute("class") && x.GetAttribute("class")!.Contains("single-recipe__infos--content"));
+        return contentElement?.Children.LastOrDefault()?.TextContent?.Trim();
     }
 }
