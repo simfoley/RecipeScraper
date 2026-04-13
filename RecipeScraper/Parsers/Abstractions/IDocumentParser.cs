@@ -12,6 +12,7 @@ internal interface IDocumentParser
     string? GetImage();
     TimeSpan? GetPrepTime();
     TimeSpan? GetCookTime();
+    TimeSpan? GetTotalTime();
     List<string> GetRecipeIngredients();
     List<string> GetRecipeInstructions();
 }

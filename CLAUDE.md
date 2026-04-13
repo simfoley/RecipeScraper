@@ -38,6 +38,20 @@ RecipeScraper.UnitTests/              # xUnit unit tests (no IO)
 3. `IRecipeScraper.ScrapeRecipe(url)` (implemented by `RecipeScraperBase`) fetches the page via AngleSharp and initialises three parsers in priority order: `JsonLdParser` → `MicrodataParser` → `HtmlTreeParser`
 4. Each `Get*` method iterates the parsers and returns the first non-null result
 
+## ScrapedRecipe model
+
+| Property                | Type        | Description                        |
+| ----------------------- | ----------- | ---------------------------------- |
+| `Name`                  | `string?`   | Recipe name                        |
+| `Image`                 | `string?`   | Image URL                          |
+| `Yield`                 | `string?`   | Serving size / yield               |
+| `PrepTime`              | `TimeSpan?` | Preparation time                   |
+| `CookTime`              | `TimeSpan?` | Cook time                          |
+| `TotalTime`             | `TimeSpan?` | Total time                         |
+| `RecipeIngredients`     | `string[]`  | List of ingredients                |
+| `RecipeInstructions`    | `string[]`  | List of instruction steps          |
+| `RecipeLanguageISOCode` | `string?`   | Language of the page (e.g. `"en"`) |
+
 ## Entry point for consumers
 
 ```csharp
