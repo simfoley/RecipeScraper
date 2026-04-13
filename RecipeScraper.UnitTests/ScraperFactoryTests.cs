@@ -5,45 +5,60 @@ using RecipeScraper.Scrapers;
 using System;
 using Xunit;
 
-namespace RecipeScraper.UnitTests
+namespace RecipeScraper.UnitTests;
+
+public class ScraperFactoryTests
 {
-    public class ScraperFactoryTests
+    private readonly IScraperFactory _factory = new ScraperFactory();
+
+    [Fact]
+    public void GetScraper_InvalidUri_ThrowsUriFormatException()
     {
-        private readonly IScraperFactory _factory = new ScraperFactory();
-
-        [Fact]
-        public void GetScraper_InvalidUri_ThrowsUriFormatException()
-        {
-            Assert.Throws<UriFormatException>(() => _factory.GetScraper("test"));
-        }
-
-        [Fact]
-        public void GetScraper_UnregisteredHostname_ReturnsBaseScraper()
-        {
-            var scraper = _factory.GetScraper("https://www.ricardocuisine.com/en/recipes/9043-barbecue-chicken-skewers-the-best");
-
-            Assert.IsType<RecipeScraperBase>(scraper);
-        }
-
-        [Fact]
-        public void GetScraper_RegisteredHostname_ReturnsCustomScraper()
-        {
-            var scraper = _factory.GetScraper("https://lecoupdegrace.ca/en/recette/grilled-spatchcock-turkey-with-dry-maple/");
-
-            Assert.IsNotType<RecipeScraperBase>(scraper);
-        }
-
-        [Fact]
-        public void GetScraper_CustomRegisteredHostname_ReturnsAddedScraper()
-        {
-            var options = new RecipeScraperOptions().AddCustomScraper<TestCustomScraper>("custom-scraper-webpage.com");
-            var factory = new ScraperFactory(options);
-
-            var scraper = factory.GetScraper("https://custom-scraper-webpage.com/recipe99");
-
-            Assert.IsType<TestCustomScraper>(scraper);
-        }
+        Assert.Throws<UriFormatException>(() => _factory.GetScraper("not-a-url"));
     }
 
-    public class TestCustomScraper : RecipeScraperBase { }
+    [Fact]
+    public void GetScraper_UnregisteredHostname_ReturnsRecipeScraperBase()
+    {
+        var scraper = _factory.GetScraper("https://unknown-site.com/recipe/123");
+        Assert.IsType<RecipeScraperBase>(scraper);
+    }
+
+    [Fact]
+    public void GetScraper_LeCoupDeGraceHostname_ReturnsLeCoupDeGraceScraper()
+    {
+        var scraper = _factory.GetScraper("https://lecoupdegrace.ca/en/recette/example");
+        Assert.IsType<LeCoupDeGraceScraper>(scraper);
+    }
+
+    [Fact]
+    public void GetScraper_UrlWithWwwPrefix_StripsWwwAndReturnsCorrectScraper()
+    {
+        var scraper = _factory.GetScraper("https://www.lecoupdegrace.ca/en/recette/example");
+        Assert.IsType<LeCoupDeGraceScraper>(scraper);
+    }
+
+    [Fact]
+    public void GetScraper_CustomRegisteredHostname_ReturnsCustomScraper()
+    {
+        var options = new RecipeScraperOptions().AddCustomScraper<TestCustomScraper>("custom-site.com");
+        var factory = new ScraperFactory(options);
+
+        var scraper = factory.GetScraper("https://custom-site.com/recipe/123");
+
+        Assert.IsType<TestCustomScraper>(scraper);
+    }
+
+    [Fact]
+    public void GetScraper_CustomRegisteredHostnameWithWwwPrefix_ReturnsCustomScraper()
+    {
+        var options = new RecipeScraperOptions().AddCustomScraper<TestCustomScraper>("custom-site.com");
+        var factory = new ScraperFactory(options);
+
+        var scraper = factory.GetScraper("https://www.custom-site.com/recipe/123");
+
+        Assert.IsType<TestCustomScraper>(scraper);
+    }
 }
+
+public class TestCustomScraper : RecipeScraperBase { }

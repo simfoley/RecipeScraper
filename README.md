@@ -95,7 +95,7 @@ Pull requests are welcome. The library tries three parsing strategies in priorit
 2. **Microdata** — inline `itemtype="http://schema.org/Recipe"` attributes
 3. **HTML tree** — fallback heuristic HTML parsing
 
-To add support for a new site, create a class that inherits `RecipeScraperBase`, override the methods that differ, and register it via `AddCustomScraper`. Integration tests live in the `RecipeScraper.IntegrationTests` project.
+To add support for a new site, create a class that inherits `RecipeScraperBase`, override the methods that differ, and register it via `AddCustomScraper`. Integration tests live in `RecipeScraper.IntegrationTests` — to add coverage for a new site, add an entry to `RecipeTestData.json` with the URL and expected values.
 
 ## License
 

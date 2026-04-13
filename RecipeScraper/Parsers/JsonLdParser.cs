@@ -67,7 +67,11 @@ namespace RecipeScraper.Parsers
                 switch (imageElement.ValueKind)
                 {
                     case JsonValueKind.Array:
-                        return imageElement[0].GetString();
+                        if (imageElement[0].ValueKind == JsonValueKind.String)
+                            return imageElement[0].GetString();
+                        if (imageElement[0].ValueKind == JsonValueKind.Object && imageElement[0].TryGetProperty("url", out JsonElement arrayUrl))
+                            return arrayUrl.GetString();
+                        break;
                     case JsonValueKind.String:
                         return imageElement.GetString();
                     case JsonValueKind.Object:

@@ -1,11 +1,27 @@
 # RecipeScraper — Codebase Guide
 
+## Build & test
+
+```bash
+dotnet build
+dotnet test
+
+# Run only unit tests (no IO)
+dotnet test RecipeScraper.UnitTests
+
+# Run a single test by name
+dotnet test --filter "FullyQualifiedName~GetScraper_InvalidUri"
+```
+
+Integration tests make real HTTP requests. Unit tests in `RecipeScraper.UnitTests` are pure (no IO).
+
 ## Project structure
 
 ```
 RecipeScraper/                        # Main library
   Extensions/
     ServiceCollectionExtensions.cs    # AddRecipeScraper() DI extension
+    StringExtensions.cs               # NormalizeWhitespace() extension
   Factory/
     Abstractions/IScraperFactory.cs   # GetScraper(url) interface
     ScraperFactory.cs                 # Hostname-based scraper lookup
@@ -19,7 +35,7 @@ RecipeScraper/                        # Main library
     HtmlTreeParser.cs                 # Heuristic HTML tree fallback
   Scrapers/
     Abstractions/IRecipeScraper.cs    # ScrapeRecipe(url) interface
-    RecipeScraperBase.cs              # Base class: fetches page, runs parsers
+    RecipeScraperBase.cs              # Base class: fetches page, runs parsers, normalizes output
     LeCoupDeGraceScraper.cs           # Site-specific scraper example
   Service/
     Abstractions/IRecipeScraperService.cs
@@ -28,7 +44,12 @@ RecipeScraper/                        # Main library
     AngleSharpHelpers.cs              # DOM traversal utilities
 
 RecipeScraper.IntegrationTests/       # xUnit integration tests (real HTTP)
+  RecipeTestData.json                 # Central test data: URLs + expected values for all sites
+  RecipeTestCase.cs                   # Test case model (deserialized from JSON)
+  RecipeTestData.cs                   # Loads and exposes RecipeTestData.json
+  RecipeScraperServiceTests.cs        # Theory tests over all sites
 RecipeScraper.UnitTests/              # xUnit unit tests (no IO)
+RecipeScraper.slnx                    # Solution file
 ```
 
 ## How it works
@@ -37,6 +58,7 @@ RecipeScraper.UnitTests/              # xUnit unit tests (no IO)
 2. `RecipeScraperService` delegates to `IScraperFactory.GetScraper(url)` — a pure hostname lookup that returns the appropriate `IRecipeScraper`
 3. `IRecipeScraper.ScrapeRecipe(url)` (implemented by `RecipeScraperBase`) fetches the page via AngleSharp and initialises three parsers in priority order: `JsonLdParser` → `MicrodataParser` → `HtmlTreeParser`
 4. Each `Get*` method iterates the parsers and returns the first non-null result
+5. All string outputs are passed through `NormalizeWhitespace()` before being returned — this collapses Unicode whitespace variants (e.g. non-breaking spaces) into regular spaces and trims. Image URLs are not normalized.
 
 ## ScrapedRecipe model
 
@@ -78,14 +100,19 @@ public class MySiteScraper : RecipeScraperBase
 
 Register it with `options.AddCustomScraper<MySiteScraper>("hostname.com")`.
 
-## Build & test
+## Adding integration tests for a new site
 
-```bash
-dotnet build
-dotnet test
+Test data lives in `RecipeScraper.IntegrationTests/RecipeTestData.json`. Add a new entry with the URL and expected values — all fields are optional except `url`. Full `ingredients` and `instructions` arrays are preferred over spot-checks.
+
+```json
+{
+  "url": "https://example.com/my-recipe",
+  "name": "My Recipe",
+  "languageCode": "en",
+  "ingredients": ["1 cup flour", "2 eggs"],
+  "instructions": ["Mix ingredients.", "Bake at 350F for 30 minutes."]
+}
 ```
-
-Integration tests make real HTTP requests. Unit tests in `RecipeScraper.UnitTests` are pure (no IO).
 
 ## Key namespaces
 
@@ -96,4 +123,4 @@ Integration tests make real HTTP requests. Unit tests in `RecipeScraper.UnitTest
 | `RecipeScraper.Scrapers` | `RecipeScraperBase`, site-specific scrapers |
 | `RecipeScraper.Parsers` | `JsonLdParser`, `MicrodataParser`, `HtmlTreeParser` |
 | `RecipeScraper.Factory` | `IScraperFactory`, `ScraperFactory` |
-| `RecipeScraper.Extensions` | `AddRecipeScraper()` |
+| `RecipeScraper.Extensions` | `AddRecipeScraper()`, `NormalizeWhitespace()` |

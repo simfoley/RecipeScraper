@@ -70,7 +70,16 @@ internal class HtmlTreeParser : IDocumentParser
 
     public string? GetYield() => null;
 
-    public string? GetImage() => null;
+    private static readonly string[] DecorativeImagePatterns = ["logo", "icon", "avatar", "sprite", ".svg"];
+
+    public string? GetImage()
+    {
+        return _pageContent.Images
+            .Where(img => !string.IsNullOrEmpty(img.Source))
+            .Where(img => !DecorativeImagePatterns.Any(p => img.Source!.Contains(p, StringComparison.OrdinalIgnoreCase)))
+            .OrderByDescending(img => img.DisplayWidth * img.DisplayHeight)
+            .FirstOrDefault()?.Source;
+    }
 
     public TimeSpan? GetPrepTime() => null;
 
