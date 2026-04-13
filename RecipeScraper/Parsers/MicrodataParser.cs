@@ -77,6 +77,20 @@ namespace RecipeScraper.Parsers
             return cookTime != null ? XmlConvert.ToTimeSpan(cookTime) : null;
         }
 
+        public TimeSpan? GetTotalTime()
+        {
+            var totalTimeElement = AngleSharpHelpers.GetSingleItemPropElementFromPageContent("totalTime", _pageContent);
+
+            string? totalTime = totalTimeElement?.LocalName switch
+            {
+                "time" => totalTimeElement.GetAttribute("datetime"),
+                "meta" => totalTimeElement.GetAttribute("content"),
+                _ => totalTimeElement?.TextContent.Trim()
+            };
+
+            return totalTime != null ? XmlConvert.ToTimeSpan(totalTime) : null;
+        }
+
         public List<string> GetRecipeIngredients()
         {
             var ingredientElements = AngleSharpHelpers.GetMultipleItemPropElementsFromPageContent("recipeIngredient", _pageContent);

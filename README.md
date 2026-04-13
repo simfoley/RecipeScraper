@@ -54,6 +54,7 @@ public class MyClass(IRecipeScraperService scraper)
 | `Yield`                 | `string?`   | Serving size / yield               |
 | `PrepTime`              | `TimeSpan?` | Preparation time                   |
 | `CookTime`              | `TimeSpan?` | Cook time                          |
+| `TotalTime`             | `TimeSpan?` | Total time                         |
 | `RecipeIngredients`     | `string[]`  | List of ingredients                |
 | `RecipeInstructions`    | `string[]`  | List of instruction steps          |
 | `RecipeLanguageISOCode` | `string?`   | Language of the page (e.g. `"en"`) |

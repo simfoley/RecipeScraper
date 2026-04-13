@@ -76,6 +76,8 @@ internal class HtmlTreeParser : IDocumentParser
 
     public TimeSpan? GetCookTime() => null;
 
+    public TimeSpan? GetTotalTime() => null;
+
     public List<string> GetRecipeIngredients()
     {
         var recipeIngredients = new List<string>();

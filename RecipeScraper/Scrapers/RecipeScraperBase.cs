@@ -29,6 +29,7 @@ public class RecipeScraperBase : IRecipeScraper
             Yield = GetYield(),
             PrepTime = GetPrepTime(),
             CookTime = GetCookTime(),
+            TotalTime = GetTotalTime(),
             RecipeIngredients = GetRecipeIngredients(),
             RecipeInstructions = GetRecipeInstructions(),
             RecipeLanguageISOCode = GetRecipeLanguageISOCode()
@@ -124,6 +125,21 @@ public class RecipeScraperBase : IRecipeScraper
                 var cookTime = formatScraper.GetCookTime();
                 if (cookTime != null)
                     return cookTime;
+            }
+        }
+
+        return null;
+    }
+
+    public virtual TimeSpan? GetTotalTime()
+    {
+        foreach (var formatScraper in _documentParsers)
+        {
+            if (formatScraper.IsActive)
+            {
+                var totalTime = formatScraper.GetTotalTime();
+                if (totalTime != null)
+                    return totalTime;
             }
         }
 

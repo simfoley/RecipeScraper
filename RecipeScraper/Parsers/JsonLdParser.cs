@@ -119,6 +119,18 @@ namespace RecipeScraper.Parsers
             return null;
         }
 
+        public TimeSpan? GetTotalTime()
+        {
+            if (_jsonRecipe.TryGetProperty("totalTime", out JsonElement totalTimeElement) && totalTimeElement.ValueKind == JsonValueKind.String)
+            {
+                string? totalTime = totalTimeElement.GetString();
+                if (!string.IsNullOrEmpty(totalTime))
+                    return XmlConvert.ToTimeSpan(totalTime);
+            }
+
+            return null;
+        }
+
         public List<string> GetRecipeIngredients()
         {
             var recipeIngredients = new List<string>();
