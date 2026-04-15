@@ -20,16 +20,16 @@ public class ScraperFactory : IScraperFactory
             { "lecoupdegrace.ca", () => new LeCoupDeGraceScraper() }
         };
 
-        foreach (var (hostname, factory) in options.CustomScrapers)
-            _scrapers[hostname] = factory;
+        foreach (var kvp in options.CustomScrapers)
+            _scrapers[kvp.Key] = kvp.Value;
     }
 
     public IRecipeScraper GetScraper(string url)
     {
         string hostname = new Uri(url).Host.Replace("www.", "");
 
-        if (_scrapers.TryGetValue(hostname, out var factory))
-            return factory();
+        if (_scrapers.TryGetValue(hostname, out var scraper))
+            return scraper();
 
         return new RecipeScraperBase();
     }
