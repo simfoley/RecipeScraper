@@ -29,8 +29,8 @@ internal class HtmlTreeParser : IDocumentParser
     private static readonly (Func<string, bool> Condition, int Points)[] IngredientRules =
     [
         (text => text.Length >= MinIngredientLength && text.Length < MaxIngredientLength, 30),
-        (text => CommonIngredients.Any(i => text.Contains(i, StringComparison.CurrentCultureIgnoreCase)), 30),
-        (text => CommonUnits.Any(u => text.Contains(u, StringComparison.CurrentCultureIgnoreCase)), 10),
+        (text => CommonIngredients.Any(i => text.IndexOf(i, StringComparison.CurrentCultureIgnoreCase) >= 0), 30),
+        (text => CommonUnits.Any(u => text.IndexOf(u, StringComparison.CurrentCultureIgnoreCase) >= 0), 10),
         (text => char.IsDigit(text[0]), 20),
         (text => !text.Contains(". "), 10),
     ];
@@ -39,7 +39,7 @@ internal class HtmlTreeParser : IDocumentParser
     private static readonly (Func<string, bool> Condition, int Points)[] InstructionRules =
     [
         (text => text.Length > MinInstructionLength && text.Length < MaxInstructionLength, 30),
-        (text => InstructionsCommonWords.Any(w => text.Contains(w, StringComparison.CurrentCultureIgnoreCase)), 30),
+        (text => InstructionsCommonWords.Any(w => text.IndexOf(w, StringComparison.CurrentCultureIgnoreCase) >= 0), 30),
         (text => char.IsUpper(text[0]), 10),
         (text => text.Contains(". "), 20),
         (text => char.IsPunctuation(text[text.Length - 1]), 10),
@@ -76,7 +76,7 @@ internal class HtmlTreeParser : IDocumentParser
     {
         return _pageContent.Images
             .Where(img => !string.IsNullOrEmpty(img.Source))
-            .Where(img => !DecorativeImagePatterns.Any(p => img.Source!.Contains(p, StringComparison.OrdinalIgnoreCase)))
+            .Where(img => !DecorativeImagePatterns.Any(p => img.Source!.IndexOf(p, StringComparison.OrdinalIgnoreCase) >= 0))
             .OrderByDescending(img => img.DisplayWidth * img.DisplayHeight)
             .FirstOrDefault()?.Source;
     }
