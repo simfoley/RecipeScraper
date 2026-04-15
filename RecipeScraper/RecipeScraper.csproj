@@ -10,6 +10,7 @@
       Library that uses Anglesharp to parse a webpage that contains a recipe and returns a recipe object.
     </Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,6 +21,10 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="RecipeScraper.UnitTests" />
+  </ItemGroup>
+
+  <ItemGroup>
+	<None Include="../README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
 </Project>
