@@ -11,7 +11,14 @@ RecipeScraper is a .NET library that extracts recipe data from any web page. Pas
 
 ## Requirements
 
-- .NET 10.0+
+This library targets **.NET Standard 2.0**. It can be used in projects targeting any of the following:
+
+* **.NET 5.0** or higher
+* **.NET Core 2.0** or higher
+* **.NET Framework 4.6.1** or higher (4.7.2+ recommended)
+* **Mono 5.4+** / **Xamarin.iOS 10.14+**
+
+To build this project from source, you will need the [.NET SDK](https://dotnet.microsoft.com/download).
 
 ## Usage
 
