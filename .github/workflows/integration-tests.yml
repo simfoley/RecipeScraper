@@ -1,0 +1,28 @@
+name: Integration Tests
+
+# Runs integration tests on a monthly schedule to detect when supported recipe sites
+# change their markup and break scraping. This ensures we proactively catch regressions
+# rather than waiting for users to report broken sites.
+
+on:
+  schedule:
+    - cron: '0 0 1 * *'
+  workflow_dispatch:
+
+jobs:
+  integration-test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: 10.0.x
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Run Integration Tests
+      run: dotnet test RecipeScraper.IntegrationTests --no-build --verbosity normal
